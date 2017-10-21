@@ -1,7 +1,3 @@
-#
-# Dockerfile for GPLCart
-#
-
 FROM php:7-apache
 MAINTAINER Iurii Makukh <gplcart.software@gmail.com>
 
