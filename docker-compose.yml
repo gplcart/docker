@@ -1,0 +1,13 @@
+gplcart:
+  image: gplcart/core
+  ports:
+    - "8080:80"
+  links:
+    - mysql
+  restart: always
+mysql:
+  image: mysql
+  environment:
+    - MYSQL_ROOT_PASSWORD=root
+    - MYSQL_DATABASE=gplcart
+  restart: always
