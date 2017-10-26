@@ -1,69 +1,31 @@
-FROM phusion/baseimage:0.9.22
+FROM php:7.1-apache
 MAINTAINER Iurii Makukh <gplcart.software@gmail.com>
 
-# based on dgraziotin/lamp
-# MAINTAINER Daniel Graziotin <daniel@ineed.coffee>
+RUN set -ex \
+	&& apt-get update \
+	&& apt-get install -y \
+		libjpeg-dev \
+		libpng-dev \
+                libcurl4-openssl-dev \
+	&& rm -rf /var/lib/apt/lists/* \
+	&& docker-php-ext-configure gd --with-png-dir=/usr --with-jpeg-dir=/usr \
+	&& docker-php-ext-install opcache gd pdo_mysql zip
 
-ENV DOCKER_USER_ID 501 
-ENV DOCKER_USER_GID 20
+RUN a2enmod rewrite expires
 
-ENV BOOT2DOCKER_ID 1000
-ENV BOOT2DOCKER_GID 50
+WORKDIR /var/www/html
 
-# Tweaks to give Apache/PHP write permissions to the app
-RUN usermod -u ${BOOT2DOCKER_ID} www-data && \
-    usermod -G staff www-data && \
-    useradd -r mysql && \
-    usermod -G staff mysql
+COPY config/php/php.ini /usr/local/etc/php/
 
-RUN groupmod -g $(($BOOT2DOCKER_GID + 10000)) $(getent group $BOOT2DOCKER_GID | cut -d: -f1)
-RUN groupmod -g ${BOOT2DOCKER_GID} staff
+ENV GPLCART_VER dev
+ENV GPLCART_URL https://github.com/gplcart/gplcart/archive/${GPLCART_VER}.tar.gz
+ENV GPLCART_FILE gplcart.tar.gz
 
-# Install packages
-ENV DEBIAN_FRONTEND noninteractive
-RUN apt-get update && \
-  apt-get -y install supervisor wget git apache2 mysql-server zip unzip pwgen php libapache2-mod-php php-mysql php-pdo php-mcrypt php-curl php-zip php-gd && \
-  echo "ServerName localhost" >> /etc/apache2/apache2.conf
+RUN set -xe \
+    && curl -sSL ${GPLCART_URL} -o ${GPLCART_FILE} \
+    && tar -xzf ${GPLCART_FILE} --strip 1 \
+    && rm ${GPLCART_FILE} \
+    && chown -R www-data:www-data /var/www/html/*
 
-# needed for phpMyAdmin
-RUN phpenmod mcrypt
+CMD ["apache2-foreground"]
 
-# Add image configuration and scripts
-ADD start-apache2.sh /start-apache2.sh
-ADD start-mysqld.sh /start-mysqld.sh
-ADD run.sh /run.sh
-RUN chmod 755 /*.sh
-ADD supervisord-apache2.conf /etc/supervisor/conf.d/supervisord-apache2.conf
-ADD supervisord-mysqld.conf /etc/supervisor/conf.d/supervisord-mysqld.conf
-
-# Remove pre-installed database
-RUN rm -rf /var/lib/mysql
-
-# Add MySQL utils
-ADD create_mysql_users.sh /create_mysql_users.sh
-RUN chmod 755 /*.sh
-
-# Add phpmyadmin
-RUN wget -O /tmp/phpmyadmin.tar.gz https://files.phpmyadmin.net/phpMyAdmin/4.7.5/phpMyAdmin-4.7.5-all-languages.tar.gz
-RUN tar xfvz /tmp/phpmyadmin.tar.gz -C /var/www
-RUN ln -s /var/www/phpMyAdmin-4.7.5-all-languages /var/www/phpmyadmin
-RUN mv /var/www/phpmyadmin/config.sample.inc.php /var/www/phpmyadmin/config.inc.php
-
-ENV MYSQL_PASS:-$(pwgen -s 12 1)
-# config to enable .htaccess
-ADD apache_default /etc/apache2/sites-available/000-default.conf
-RUN a2enmod rewrite
-
-# Configure /app folder with sample app
-RUN mkdir -p /app && rm -fr /var/www/html && ln -s /app /var/www/html
-ADD app/ /app
-
-#Environment variables to configure php
-ENV PHP_UPLOAD_MAX_FILESIZE 10M
-ENV PHP_POST_MAX_SIZE 10M
-
-# Add volumes for the app and MySql
-VOLUME  ["/etc/mysql", "/var/lib/mysql", "/app" ]
-
-EXPOSE 80 3306
-CMD ["/run.sh"]
