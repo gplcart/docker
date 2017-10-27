@@ -16,11 +16,6 @@ RUN set -ex \
 WORKDIR /var/www/html
 
 COPY config/php/php.ini /usr/local/etc/php/
-COPY docker-entrypoint.sh /usr/local/bin/
-
-ENV GPLCART_INSTALL 1
-ENV GPLCART_EMAIL test@test.com
-ENV GPLCART_PASSWORD 12345678
 
 ENV GPLCART_VER dev
 ENV GPLCART_URL https://github.com/gplcart/gplcart/archive/${GPLCART_VER}.tar.gz
@@ -30,8 +25,4 @@ RUN set -xe \
     && curl -sSL ${GPLCART_URL} -o ${GPLCART_FILE} \
     && tar -xzf ${GPLCART_FILE} --strip 1 \
     && rm ${GPLCART_FILE} \
-    && chown -R www-data:www-data . \
-    && chmod +x /usr/local/bin/docker-entrypoint.sh
-
-ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
-CMD ["apache2-foreground"]
+    && chown -R www-data:www-data .
