@@ -6,7 +6,7 @@ To run a container locally
 2. `docker build -t test .`
 3. `docker run --name test -d -p 8080:80 test`
 
-To pull from global repository
+To pull from [repository](https://hub.docker.com/r/gplcart/core)
 
 1. `docker pull gplcart/core`
 2. `docker run --name test -d -p 8080:80 gplcart/core`
