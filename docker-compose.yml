@@ -1,19 +1,22 @@
-gplcart:
-  image: gplcart/core
-  links:
-    - db
-  ports:
-    - 8080:80
-db:
-  image: mariadb:10.2
-  environment:
-    MYSQL_DATABASE: test
-    MYSQL_ROOT_PASSWORD: test
-  ports:
-    - 3306:3306
-phpmyadmin:
-  image: phpmyadmin/phpmyadmin:4.7
-  links:
-    - db
-  ports:
-    - 8181:80
+version: '3'
+services:
+  gplcart:
+    build: .
+    image: gplcart/core
+    links:
+      - db
+    ports:
+      - 8080:80
+  db:
+    image: mariadb:10.2
+    environment:
+      MYSQL_DATABASE: test
+      MYSQL_ROOT_PASSWORD: test
+    ports:
+      - 3306:3306
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:4.7
+    links:
+      - db
+    ports:
+      - 8181:80
