@@ -1,4 +1,5 @@
 gplcart:
+  image: gplcart/core
   links:
     - db
   ports:
