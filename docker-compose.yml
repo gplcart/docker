@@ -1,5 +1,4 @@
 gplcart:
-  build: .
   links:
     - db
   ports:
